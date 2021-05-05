@@ -92,6 +92,9 @@ DollarRecognizer = function() -- constructor
     --
     this.Recognize = function(points, useProtractor)
         local points  = Resample(points, NumPoints)
+        if #points ~= NumPoints then
+            return Result('unrecognized (too few points)', 0)
+        end
         local radians = IndicativeAngle(points)
         points        = RotateBy(points, -radians)
         points        = ScaleTo(points, SquareSize)
@@ -120,15 +123,13 @@ DollarRecognizer = function() -- constructor
     this.AddTemplate = function(name, points)
         this.Templates[#this.Templates + 1] = Template(name, points) -- append new template
         local num = 0
-        for i = 0, #this.Templates, 1 do
-            if this.Templates[i].Name == name then
-                num = num + 1
-            end
+        for i, template in ipairs(this.Templates) do
+            num = num + (template.Name == name and 1 or 0)
         end
         return num
     end
     this.DeleteUserTemplates = function()
-        for i = #this.Templates, NumTemplates, -1 do
+        for i = #this.Templates, NumTemplates + 1, -1 do
             table.remove(this.Templates, i) -- clear any beyond the original set
         end
 
@@ -144,7 +145,7 @@ Resample = function(points, n)
     local D = 0.0
     local newpoints = {points[1]}
     local i = 2
-    while i < #points do
+    while i <= #points do
         local d = Distance(points[i - 1], points[i])
         if (D + d) >= I then
             local qx = points[i - 1].X + ((I - D) / d) * (points[i].X - points[i - 1].X)
