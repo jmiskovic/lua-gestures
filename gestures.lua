@@ -2,7 +2,7 @@
 -- Declarations
 --
 local NumTemplates, NumPoints, SquareSize, Origin, Diagonal, HalfDiagonal, AngleRange, AnglePrecision
-local Point, Rectangle, Template, Result, DollarRecognizer, Resample, IndicativeAngle, RotateBy, ScaleTo, TranslateTo, Vectorize, OptimalCosineDistance, DistanceAtBestAngle, DistanceAtAngle, Centroid, BoundingBox, PathDistance, PathLength, Distance, Deg2Rad, Rad2Deg
+local Point, Rectangle, Template, Result, GestureRecognizer, Resample, IndicativeAngle, RotateBy, ScaleTo, TranslateTo, Vectorize, OptimalCosineDistance, DistanceAtBestAngle, DistanceAtAngle, Centroid, BoundingBox, PathDistance, PathLength, Distance, Deg2Rad, Rad2Deg
 local sqrt, atan2, cos, sin, atan, acos, abs, min, pi, Infinity = math.sqrt,math.atan2, math.cos, math.sin, math.atan, math.acos, math.abs, math.min, math.pi, math.huge
 --
 -- Point class
@@ -42,7 +42,7 @@ end
 Deg2Rad = function(d) return (d * pi / 180.0) end
 Rad2Deg = function(r) return (r * 180.0 / pi) end
 --
--- DollarRecognizer class constants
+-- GestureRecognizer class constants
 --
 NumPoints      = 64
 SquareSize     = 250.0
@@ -53,9 +53,9 @@ AngleRange     = Deg2Rad(45.0)
 AnglePrecision = Deg2Rad(2.0)
 Phi            = 0.5 * (-1.0 + sqrt(5.0)) -- Golden Ratio
 --
--- DollarRecognizer class
+-- GestureRecognizer class
 --
-DollarRecognizer = function() -- constructor
+GestureRecognizer = function() -- constructor
     local self         = {}
     self.Templates     = {}
 
@@ -308,4 +308,4 @@ Distance = function(p1, p2)
     return sqrt(dx * dx + dy * dy)
 end
 
-return DollarRecognizer
+return GestureRecognizer

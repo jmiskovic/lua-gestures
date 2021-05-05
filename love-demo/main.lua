@@ -1,5 +1,9 @@
-local dollar = require('dollar')()
-dollar.presets() -- populate gestures with presets (http://depts.washington.edu/acelab/proj/dollar/index.html)
+-- require and immediately call the constructor
+local gestures = require('gestures')()
+-- we could have several recognizers with independent gestures: lowercase, uppercase, numerals...
+
+gestures.presets() -- populate gestures with presets
+-- check the preset gestures here: http://depts.washington.edu/acelab/proj/dollar/index.html
 
 local points = {}
 local result = ''
@@ -31,17 +35,18 @@ end
 
 function love.mousereleased(x, y, button, istouch, presses)
   if button == 1 then
-    local name, score = dollar.recognize(points, true)
+    local useProtractor = true -- otherwise the recognition uses slower Golden Section Search
+    local name, score = gestures.recognize(points, useProtractor)
     result = string.format('%s %1.2f', name, score)
   elseif button == 2 then
-    -- for simplicity all recorded gestures are stored under same name
-    dollar.add('user-recorded', points)
+    -- for simplicity of this example all recorded gestures are stored under same name
+    gestures.add('user-recorded', points)
   end
 end
 
 function love.keypressed(key)
   if key == 'backspace' then
-    dollar.remove('user-recorded')
+    gestures.remove('user-recorded')
   end
 end
 
