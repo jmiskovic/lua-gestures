@@ -140,7 +140,15 @@ end
 -- Private helper functions from this point down
 --
 Resample = function(points, n)
-    assert(type(points) == 'table')
+    assert(type(points) == 'table', "Points must be flat or nested table of coordinates")
+    if type(points[1]) == 'number' then -- convert flat table of coordinates into list of {x, y} pairs
+        local flatpoints = points
+        assert(#flatpoints % 2 == 0, "Flat points list requires even number of x,y coordinates")
+        points = {}
+        for i = 1,  math.floor(#flatpoints / 2), 1 do
+            points[i] = {flatpoints[i * 2 - 1], flatpoints[i * 2]}
+        end
+    end    
     local I = PathLength(points) / (n - 1) -- interval length
     local D = 0.0
     local newpoints = {points[1]}
