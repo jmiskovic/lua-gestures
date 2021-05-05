@@ -26,17 +26,27 @@ To add new custom gesture to recognizer, first record its points and assign name
 
 To recognize user gesture, collect the points forming the gesture and pass them into the function:
 
-`gesture.recognize(points, useProtractor)`
+`gestures.recognize(points, useProtractor)`
 
 The `useProtractor` bool value specifies if the gesture recognition uses the faster Protractor search algorithm, or the original Golden Section Search (default is `false`). The function will return name (string) of closest match, as well as numerical score on how good the match is. Score 0 is worst, more is better. Beware, protractor and golden section search use different scoring scale.
 
 The defined gestures can be removed at any time:
 
-`gesture.remove(name)`
+`gestures.remove(name)`
 
 This will remove all gestures registered under the supplied name and return the number of gestures removed.
 
-See included [LÖVE](https://love2d.org/) project for a working demo.
+Gestures can be dumped to console. Printed data will include name and list of points.
+
+`gestures.dump(name)`
+
+If `name` string is given, only gestures with same name will be dumped, otherwise all defined gestures will be printed. A simple way to pre-define own gestures for any project is to record and add them dynamically in application, then dump them out to console, and include dumped data in source code.
+
+# Demo
+
+The included [LÖVE](https://love2d.org/) demo can be used as reference on how to use this library.
+
+![demo](./love-demo/demo.gif)
 
 # License
 
