@@ -133,6 +133,19 @@ GestureRecognizer = function() -- constructor
         end
         return num
     end
+ 
+    self.dump = function(name)
+        for i, template in ipairs(self.Templates) do
+            if not name or name == template.Name then
+                local points = {}
+                for i, point in ipairs(template.Points) do
+                    table.insert(points, string.format('{%.2f, %.2f}', point[1], point[2]))
+                end
+                print(string.format("'%s', {", template.Name), table.concat(points, ', '), '}')
+            end
+        end
+    end
+
 
     return self
 end
