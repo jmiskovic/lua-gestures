@@ -6,7 +6,7 @@ A lua port of the JavaScript $1 Unistroke Recognizer for use in games (such as t
 Usage
 =====
 
-See included [coronaSDK](http://www.coronalabs.com/) project for a demo.
+See included [LÖVE](https://love2d.org/) project for a demo.
 
 License
 =======
