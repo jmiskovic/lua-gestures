@@ -147,7 +147,7 @@ GestureRecognizer = function(oriented, uniform) -- constructor
                 for i, point in ipairs(template.Points) do
                     table.insert(points, string.format('{%.2f, %.2f}', point[1], point[2]))
                 end
-                print(string.format("'%s', {", template.Name), table.concat(points, ', '), '}')
+                print(string.format("  gestures.add('%s', {", template.Name), table.concat(points, ', '), '}, true)')
             end
         end
     end
@@ -173,19 +173,24 @@ Resample = function(points, n)
     local D = 0.0
     local newpoints = {points[1]}
     local i = 2
+    local prevpoint = points[i - 1]
+    local thispoint = points[i]
     while i <= #points do
-        local d = Distance(points[i - 1], points[i])
+        local d = Distance(prevpoint, thispoint)
         if (D + d) >= I then
-            local qx = points[i - 1][1] + ((I - D) / d) * (points[i][1] - points[i - 1][1])
-            local qy = points[i - 1][2] + ((I - D) / d) * (points[i][2] - points[i - 1][2])
+            local p1, p2 = prevpoint, thispoint
+            local qx = prevpoint[1] + ((I - D) / d) * (thispoint[1] - prevpoint[1])
+            local qy = prevpoint[2] + ((I - D) / d) * (thispoint[2] - prevpoint[2])
             local q  = Point(qx, qy)
             newpoints[#newpoints+1] = q -- append new point 'q'
-            table.insert(points, i, q) -- insert 'q' at position i in points s.t. 'q' will be the next i
+            prevpoint = q -- next iteration use interpolated as previous point
             D = 0.0
         else
             D = D + d
+            i = i + 1
+            prevpoint = points[i - 1]
+            thispoint = points[i]
         end
-        i = i + 1
     end
     -- somtimes we fall a rounding-error short of adding the last point, so add it if so
     if #newpoints == n - 1 then
