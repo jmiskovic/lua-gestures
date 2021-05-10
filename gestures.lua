@@ -2,8 +2,9 @@
 -- Declarations
 --
 local NumTemplates, NumPoints, SquareSize, Origin, Diagonal, HalfDiagonal, AngleRange, AnglePrecision
-local Point, Rectangle, Template, Result, GestureRecognizer, Resample, IndicativeAngle, RotateBy, ScaleTo, TranslateTo, Vectorize, OptimalCosineDistance, DistanceAtBestAngle, DistanceAtAngle, Centroid, BoundingBox, PathDistance, PathLength, Distance, deg2rad, rad2deg
+local Point, Rectangle, Template, Result, GestureRecognizer, resample, indicativeangle, rotateby, scaleto, translateto, vectorize, optimalcosinedistance, distanceatbestangle, distanceatangle, centroid, boundingbox, pathdistance, pathlength, distance, deg2rad, rad2deg
 local sqrt, atan2, cos, sin, atan, acos, abs, min, pi, Infinity = math.sqrt,math.atan2, math.cos, math.sin, math.atan, math.acos, math.abs, math.min, math.pi, math.huge
+
 --
 -- Point class
 --
@@ -13,36 +14,40 @@ Point = function(x, y) -- constructor
     self[2]     = y
     return self
 end
+
 --
 -- Rectangle class
 --
 Rectangle = function(x, y, width, height) -- constructor
     local self  = Point(x, y)
-    self.Width  = width
-    self.Height = height
+    self.width  = width
+    self.height = height
     return self
 end
+
 --
 -- Template class: a unistroke template
 --
 Template = function(name, points, oriented, uniform) -- constructor
     local self    = {}
-    self.Name     = name
-    self.Points   = Resample(points, NumPoints)
+    self.name     = name
+    self.points   = resample(points, NumPoints)
     if not oriented then
-        local radians = IndicativeAngle(self.Points)
-        self.Points   = RotateBy(self.Points, -radians)
+        local radians = indicativeangle(self.points)
+        self.points   = rotateby(self.points, -radians)
     end
-    self.Points   = ScaleTo(self.Points, SquareSize, uniform)
-    self.Points   = TranslateTo(self.Points, Origin)
-    self.Vector   = Vectorize(self.Points) -- for Protractor
+    self.points   = scaleto(self.points, SquareSize, uniform)
+    self.points   = translateto(self.points, Origin)
+    self.vector   = vectorize(self.points) -- for Protractor
     return self
 end
+
 --
 -- deg/rad helpers
 --
 deg2rad = function(d) return (d * pi / 180.0) end
 rad2deg = function(r) return (r * 180.0 / pi) end
+
 --
 -- GestureRecognizer class constants
 --
@@ -54,6 +59,7 @@ HalfDiagonal   = 0.5 * Diagonal
 AngleRange     = deg2rad(45.0)
 AnglePrecision = deg2rad(2.0)
 Phi            = 0.5 * (-1.0 + sqrt(5.0)) -- Golden Ratio
+
 --
 -- GestureRecognizer class
 --
@@ -64,7 +70,7 @@ GestureRecognizer = function(oriented, uniform) -- constructor
     self.uniform  = uniform  -- when true gestures are uniformly scaled, enables 1D gestures
 
     -- The $1 Gesture Recognizer API
-    
+
     self.presets = function()
         -- one predefined template for each unistroke type
         table.insert(self.templates, Template("triangle",             {Point(137,139), Point(135,141), Point(133,144), Point(132,146), Point(130,149), Point(128,151), Point(126,155), Point(123,160), Point(120,166), Point(116,171), Point(112,177), Point(107,183), Point(102,188), Point(100,191), Point(95,195), Point(90,199), Point(86,203), Point(82,206), Point(80,209), Point(75,213), Point(73,213), Point(70,216), Point(67,219), Point(64,221), Point(61,223), Point(60,225), Point(62,226), Point(65,225), Point(67,226), Point(74,226), Point(77,227), Point(85,229), Point(91,230), Point(99,231), Point(108,232), Point(116,233), Point(125,233), Point(134,234), Point(145,233), Point(153,232), Point(160,233), Point(170,234), Point(177,235), Point(179,236), Point(186,237), Point(193,238), Point(198,239), Point(200,237), Point(202,239), Point(204,238), Point(206,234), Point(205,230), Point(202,222), Point(197,216), Point(192,207), Point(186,198), Point(179,189), Point(174,183), Point(170,178), Point(164,171), Point(161,168), Point(154,160), Point(148,155), Point(143,150), Point(138,148), Point(136,148)}))
@@ -85,54 +91,53 @@ GestureRecognizer = function(oriented, uniform) -- constructor
         table.insert(self.templates, Template("pigtail",              {Point(81,219), Point(84,218), Point(86,220), Point(88,220), Point(90,220), Point(92,219), Point(95,220), Point(97,219), Point(99,220), Point(102,218), Point(105,217), Point(107,216), Point(110,216), Point(113,214), Point(116,212), Point(118,210), Point(121,208), Point(124,205), Point(126,202), Point(129,199), Point(132,196), Point(136,191), Point(139,187), Point(142,182), Point(144,179), Point(146,174), Point(148,170), Point(149,168), Point(151,162), Point(152,160), Point(152,157), Point(152,155), Point(152,151), Point(152,149), Point(152,146), Point(149,142), Point(148,139), Point(145,137), Point(141,135), Point(139,135), Point(134,136), Point(130,140), Point(128,142), Point(126,145), Point(122,150), Point(119,158), Point(117,163), Point(115,170), Point(114,175), Point(117,184), Point(120,190), Point(125,199), Point(129,203), Point(133,208), Point(138,213), Point(145,215), Point(155,218), Point(164,219), Point(166,219), Point(177,219), Point(182,218), Point(192,216), Point(196,213), Point(199,212), Point(201,211)}))
     end
 
-    -- returns gesture name and score
     self.recognize = function(points, useProtractor)
-        local points  = Resample(points, NumPoints)
+        local points  = resample(points, NumPoints)
         if #points ~= NumPoints then
             return nil, 0
         end
         if not self.oriented then
-            local radians = IndicativeAngle(points)
-            points        = RotateBy(points, -radians)
+            local radians = indicativeangle(points)
+            points        = rotateby(points, -radians)
         end
-        points        = ScaleTo(points, SquareSize, self.uniform)
-        points        = TranslateTo(points, Origin)
-        local vector  = Vectorize(points) -- for Protractor
+        points        = scaleto(points, SquareSize, self.uniform)
+        points        = translateto(points, Origin)
+        local vector  = vectorize(points) -- for Protractor
 
         local closestDistance = Infinity
         local closestIndex = 1
         for i = 1, #self.templates, 1 do -- for each unistroke template
             local d = nil
             if useProtractor then -- for Protractor
-                d = OptimalCosineDistance(self.templates[i].Vector, vector)
+                d = optimalcosinedistance(self.templates[i].vector, vector)
             else -- Golden Section Search (original $1)
-                d = DistanceAtBestAngle(points, self.templates[i], -AngleRange, AngleRange, AnglePrecision)
+                d = distanceatbestangle(points, self.templates[i], -AngleRange, AngleRange, AnglePrecision)
             end
             if d < closestDistance then
                 closestDistance = d -- best (least) distance
                 closestIndex = i -- unistroke template
             end
         end
-        local name = self.templates[closestIndex] and self.templates[closestIndex].Name or nil
+        local name = self.templates[closestIndex] and self.templates[closestIndex].name or nil
         local score = useProtractor and 1.0 / closestDistance or 1.0 - closestDistance / HalfDiagonal
         return name, score, closestIndex
     end
 
-    -- returns number of recorded gestures with same name
+
     self.add = function(name, points)
         table.insert(self.templates, Template(name, points, self.oriented, self.uniform))
         local num = 0
         for i, template in ipairs(self.templates) do
-            num = num + (template.Name == name and 1 or 0)
+            num = num + (template.name == name and 1 or 0)
         end
         return num
     end
 
-    -- returns number of removed gestures
+
     self.remove = function(name)
         local num = 0
         for i = #self.templates, 1, -1 do
-            if self.templates[i].Name == name then
+            if self.templates[i].name == name then
                 table.remove(self.templates, i)
                 num = num + 1
             end
@@ -140,27 +145,32 @@ GestureRecognizer = function(oriented, uniform) -- constructor
         return num
     end
  
+
     self.dump = function(name)
         for i, template in ipairs(self.templates) do
-            if not name or name == template.Name then
+            if not name or name == template.name then
                 local points = {}
-                for i, point in ipairs(template.Points) do
+                for i, point in ipairs(template.points) do
                     table.insert(points, string.format('{%.2f, %.2f}', point[1], point[2]))
                 end
-                print(string.format("  gestures.add('%s', {", template.Name), table.concat(points, ', '), '}, true)')
+                print(string.format("  gestures.add('%s', {", template.name), table.concat(points, ', '), '}, true)')
             end
         end
     end
 
-    self.resample = Resample
+
+    self.resample = resample
+
     
     return self
 end
 --
+
 -- Private helper functions from this point down
 --
-Resample = function(points, n)
-    assert(type(points) == 'table', "Points must be flat or nested table of coordinates")
+
+resample = function(points, n)
+    assert(type(points) == 'table', "points must be flat or nested table of coordinates")
     if type(points[1]) == 'number' then -- convert flat table of coordinates into list of {x, y} pairs
         local flatpoints = points
         assert(#flatpoints % 2 == 0, "Flat points list requires even number of x,y coordinates")
@@ -169,14 +179,14 @@ Resample = function(points, n)
             points[i] = {flatpoints[i * 2 - 1], flatpoints[i * 2]}
         end
     end    
-    local I = PathLength(points) / (n - 1) -- interval length
+    local I = pathlength(points) / (n - 1) -- interval length
     local D = 0.0
     local newpoints = {points[1]}
     local i = 2
     local prevpoint = points[i - 1]
     local thispoint = points[i]
     while i <= #points do
-        local d = Distance(prevpoint, thispoint)
+        local d = distance(prevpoint, thispoint)
         if (D + d) >= I then
             local p1, p2 = prevpoint, thispoint
             local qx = prevpoint[1] + ((I - D) / d) * (thispoint[1] - prevpoint[1])
@@ -198,12 +208,16 @@ Resample = function(points, n)
     end
     return newpoints
 end
-IndicativeAngle = function(points)
-    local c = Centroid(points)
+
+
+indicativeangle = function(points)
+    local c = centroid(points)
     return atan2(c[2] - points[1][2], c[1] - points[1][1])
 end
-RotateBy = function(points, radians) -- rotates points around centroid
-    local c   = Centroid(points)
+
+
+rotateby = function(points, radians) -- rotates points around centroid
+    local c   = centroid(points)
     local cos = cos(radians)
     local sin = sin(radians)
 
@@ -215,26 +229,29 @@ RotateBy = function(points, radians) -- rotates points around centroid
     end
     return newpoints
 end
-ScaleTo = function(points, size, uniform) -- non-uniform scale assumes 2D gestures (i.e., no lines)
-    print(uniform)
-    local B         = BoundingBox(points)
+
+
+scaleto = function(points, size, uniform) -- non-uniform scale assumes 2D gestures (i.e., no lines)
+    local bbox      = boundingbox(points)
     local newpoints = {}
     for i = 1, #points, 1 do
         local qx, qy
         if uniform then
-            local scale = math.max(B.Width, B.Height)
+            local scale = math.max(bbox.width, bbox.height)
             qx = points[i][1] * (size / scale)
             qy = points[i][2] * (size / scale)
         else
-            qx = points[i][1] * (size / B.Width)
-            qy = points[i][2] * (size / B.Height)
+            qx = points[i][1] * (size / bbox.width)
+            qy = points[i][2] * (size / bbox.height)
         end
         newpoints[#newpoints+1] = Point(qx, qy)
     end
     return newpoints
 end
-TranslateTo = function(points, pt) -- translates points' centroid
-    local c         = Centroid(points)
+
+
+translateto = function(points, pt) -- translates points' centroid
+    local c         = centroid(points)
     local newpoints = {}
     for i = 1, #points, 1 do
         local qx = points[i][1] + pt[1] - c[1]
@@ -243,7 +260,9 @@ TranslateTo = function(points, pt) -- translates points' centroid
     end
     return newpoints
 end
-Vectorize = function(points) -- for Protractor
+
+
+vectorize = function(points) -- for Protractor
     local sum    = 0.0
     local vector = {}
     for i = 1, #points, 1 do
@@ -257,7 +276,9 @@ Vectorize = function(points) -- for Protractor
     end
     return vector
 end
-OptimalCosineDistance = function(v1, v2) -- for Protractor
+
+
+optimalcosinedistance = function(v1, v2) -- for Protractor
     local a = 0.0
     local b = 0.0
     for i = 1, #v1, 2 do
@@ -268,33 +289,39 @@ OptimalCosineDistance = function(v1, v2) -- for Protractor
     local d = acos(a * cos(angle) + b * sin(angle))
     return d
 end
-DistanceAtBestAngle = function(points, T, a, b, threshold)
+
+
+distanceatbestangle = function(points, T, a, b, threshold)
     local x1 = Phi * a + (1.0 - Phi) * b
-    local f1 = DistanceAtAngle(points, T, x1)
+    local f1 = distanceatangle(points, T, x1)
     local x2 = (1.0 - Phi) * a + Phi * b
-    local f2 = DistanceAtAngle(points, T, x2)
+    local f2 = distanceatangle(points, T, x2)
     while abs(b - a) > threshold do
         if (f1 < f2) then
             b  = x2
             x2 = x1
             f2 = f1
             x1 = Phi * a + (1.0 - Phi) * b
-            f1 = DistanceAtAngle(points, T, x1)
+            f1 = distanceatangle(points, T, x1)
         else
             a  = x1
             x1 = x2
             f1 = f2
             x2 = (1.0 - Phi) * a + Phi * b
-            f2 = DistanceAtAngle(points, T, x2)
+            f2 = distanceatangle(points, T, x2)
         end
     end
     return min(f1, f2)
 end
-DistanceAtAngle = function(points, T, radians)
-    local newpoints = RotateBy(points, radians)
-    return PathDistance(newpoints, T.Points)
+
+
+distanceatangle = function(points, T, radians)
+    local newpoints = rotateby(points, radians)
+    return pathdistance(newpoints, T.points)
 end
-Centroid = function(points)
+
+
+centroid = function(points)
     local x, y = 0.0, 0.0
     for i = 1, #points, 1 do
         x = x + points[i][1]
@@ -304,7 +331,9 @@ Centroid = function(points)
     y = y / #points
     return Point(x, y)
 end
-BoundingBox = function(points)
+
+
+boundingbox = function(points)
     local minX, maxX, minY, maxY = Infinity, -Infinity, Infinity, -Infinity
     for i = 1, #points, 1 do
         if points[i][1] < minX then
@@ -322,21 +351,27 @@ BoundingBox = function(points)
     end
     return Rectangle(minX, minY, maxX - minX, maxY - minY)
 end
-PathDistance = function(pts1, pts2)
+
+
+pathdistance = function(pts1, pts2)
     local d = 0.0
     for i = 1, #pts1, 1 do -- assumes pts1.length == pts2.length
-        d = d + Distance(pts1[i], pts2[i])
+        d = d + distance(pts1[i], pts2[i])
     end
     return d / #pts1
 end
-PathLength = function(points)
+
+
+pathlength = function(points)
     local d = 0.0
     for i = 2, #points, 1 do
-        d = d + Distance(points[i - 1], points[i])
+        d = d + distance(points[i - 1], points[i])
     end
     return d
 end
-Distance = function(p1, p2)
+
+
+distance = function(p1, p2)
     local dx = p2[1] - p1[1]
     local dy = p2[2] - p1[2]
     return sqrt(dx * dx + dy * dy)
