@@ -109,7 +109,7 @@ GestureRecognizer = function(oriented, uniform) -- constructor
         for i = 1, #self.templates, 1 do -- for each unistroke template
             local d = nil
             if useProtractor then -- for Protractor
-                d = optimalcosinedistance(self.templates[i].vector, vector)
+                d = optimalcosinedistance(self.templates[i].vector, vector, self.oriented)
             else -- Golden Section Search (original $1)
                 d = distanceatbestangle(points, self.templates[i], -AngleRange, AngleRange, AnglePrecision)
             end
@@ -278,7 +278,7 @@ vectorize = function(points) -- for Protractor
 end
 
 
-optimalcosinedistance = function(v1, v2) -- for Protractor
+optimalcosinedistance = function(v1, v2, oriented) -- for Protractor
     local a = 0.0
     local b = 0.0
     for i = 1, #v1, 2 do
@@ -287,6 +287,9 @@ optimalcosinedistance = function(v1, v2) -- for Protractor
     end
     local angle = atan(b / a)
     local d = acos(a * cos(angle) + b * sin(angle))
+    if oriented and abs(angle) > AngleRange then
+        d = d + 1
+    end
     return d
 end
 
