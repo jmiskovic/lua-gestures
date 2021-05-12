@@ -151,16 +151,19 @@ GestureRecognizer = function(oriented, uniform, protractor) -- constructor
     end
  
 
-    self.dump = function(name)
+    self.serialize = function(name)
+        local lines = {}
         for i, template in ipairs(self.templates) do
             if not name or name == template.name then
                 local points = {}
                 for i, point in ipairs(template.points) do
                     table.insert(points, string.format('{%.2f, %.2f}', point[1], point[2]))
                 end
-                print(string.format("  gestures.add('%s', {", template.name), table.concat(points, ', '), '}, true)')
+                local line = string.format("gestures.add('%s', {%s})", template.name, table.concat(points, ', '))
+                table.insert(lines, line)
             end
         end
+        return table.concat(lines, '\n')
     end
 
 
