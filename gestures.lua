@@ -114,6 +114,7 @@ GestureRecognizer = function(oriented, uniform, protractor) -- constructor
             local d = nil
             if self.protractor then -- for Protractor
                 d = optimalcosinedistance(self.templates[i].vector, vector, self.oriented)
+                d = (d == d) and d or 0 -- NaN check
             else -- Golden Section Search (original $1)
                 d = distanceatbestangle(points, self.templates[i], -AngleRange, AngleRange, AnglePrecision)
             end
