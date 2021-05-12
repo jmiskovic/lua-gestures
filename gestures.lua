@@ -1,7 +1,7 @@
 --
 -- Declarations
 --
-local NumTemplates, NumPoints, SquareSize, Origin, Diagonal, HalfDiagonal, AngleRange, AnglePrecision
+local NumTemplates, NumPoints, Origin, Diagonal, HalfDiagonal, AngleRange, AnglePrecision
 local Point, Rectangle, Template, Result, GestureRecognizer, resample, indicativeangle, rotateby, scaleto, translateto, vectorize, optimalcosinedistance, distanceatbestangle, distanceatangle, centroid, boundingbox, pathdistance, pathlength, distance, deg2rad, rad2deg
 local sqrt, atan2, cos, sin, atan, acos, abs, min, pi, Infinity = math.sqrt,math.atan2, math.cos, math.sin, math.atan, math.acos, math.abs, math.min, math.pi, math.huge
 
@@ -36,7 +36,7 @@ Template = function(name, points, oriented, uniform) -- constructor
         local radians = indicativeangle(self.points)
         self.points   = rotateby(self.points, -radians)
     end
-    self.points   = scaleto(self.points, SquareSize, uniform)
+    self.points   = scaleto(self.points, 1, uniform)
     self.points   = translateto(self.points, Origin)
     self.vector   = vectorize(self.points) -- for Protractor
     return self
@@ -52,10 +52,8 @@ rad2deg = function(r) return (r * 180.0 / pi) end
 -- GestureRecognizer class constants
 --
 NumPoints      = 64
-SquareSize     = 250.0
 Origin         = Point(0, 0)
-Diagonal       = sqrt(SquareSize * SquareSize + SquareSize * SquareSize)
-HalfDiagonal   = 0.5 * Diagonal
+HalfDiagonal   = 0.5 * sqrt(1 + 1) -- of a unit square
 AngleRange     = deg2rad(45.0)
 AnglePrecision = deg2rad(2.0)
 Phi            = 0.5 * (-1.0 + sqrt(5.0)) -- Golden Ratio
@@ -100,7 +98,7 @@ GestureRecognizer = function(oriented, uniform) -- constructor
             local radians = indicativeangle(points)
             points        = rotateby(points, -radians)
         end
-        points        = scaleto(points, SquareSize, self.uniform)
+        points        = scaleto(points, 1, self.uniform)
         points        = translateto(points, Origin)
         local vector  = vectorize(points) -- for Protractor
 
