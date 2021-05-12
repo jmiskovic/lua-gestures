@@ -61,11 +61,17 @@ Phi            = 0.5 * (-1.0 + sqrt(5.0)) -- Golden Ratio
 --
 -- GestureRecognizer class
 --
-GestureRecognizer = function(oriented, uniform) -- constructor
+GestureRecognizer = function(oriented, uniform, protractor) -- constructor
     local self     = {}
     self.templates = {}
-    self.oriented = oriented  -- when true gestures are rotation-sensitive
-    self.uniform  = uniform  -- when true gestures are uniformly scaled, enables 1D gestures
+    -- 'oriented' option makes gestures rotation-sensitive
+
+    -- this makes it possible to distinguish similar gestures in different orientations
+    if oriented == false then self.oriented = false else self.oriented = true end
+    -- 'uniform' option makes gestures uniformly scaled, this enables 1D gestures
+    if uniform == false then self.uniform = false else self.uniform = true end
+    -- 'protractor' option selects faster algorithm, an improvement over original iterative solution
+    if protractor == false then self.protractor = false else self.protractor = true end
 
     -- The $1 Gesture Recognizer API
 
@@ -89,7 +95,7 @@ GestureRecognizer = function(oriented, uniform) -- constructor
         table.insert(self.templates, Template("pigtail",              {Point(81,219), Point(84,218), Point(86,220), Point(88,220), Point(90,220), Point(92,219), Point(95,220), Point(97,219), Point(99,220), Point(102,218), Point(105,217), Point(107,216), Point(110,216), Point(113,214), Point(116,212), Point(118,210), Point(121,208), Point(124,205), Point(126,202), Point(129,199), Point(132,196), Point(136,191), Point(139,187), Point(142,182), Point(144,179), Point(146,174), Point(148,170), Point(149,168), Point(151,162), Point(152,160), Point(152,157), Point(152,155), Point(152,151), Point(152,149), Point(152,146), Point(149,142), Point(148,139), Point(145,137), Point(141,135), Point(139,135), Point(134,136), Point(130,140), Point(128,142), Point(126,145), Point(122,150), Point(119,158), Point(117,163), Point(115,170), Point(114,175), Point(117,184), Point(120,190), Point(125,199), Point(129,203), Point(133,208), Point(138,213), Point(145,215), Point(155,218), Point(164,219), Point(166,219), Point(177,219), Point(182,218), Point(192,216), Point(196,213), Point(199,212), Point(201,211)}))
     end
 
-    self.recognize = function(points, useProtractor)
+    self.recognize = function(points)
         local points  = resample(points, NumPoints)
         if #points ~= NumPoints then
             return nil, 0
@@ -106,7 +112,7 @@ GestureRecognizer = function(oriented, uniform) -- constructor
         local closestIndex = 1
         for i = 1, #self.templates, 1 do -- for each unistroke template
             local d = nil
-            if useProtractor then -- for Protractor
+            if self.protractor then -- for Protractor
                 d = optimalcosinedistance(self.templates[i].vector, vector, self.oriented)
             else -- Golden Section Search (original $1)
                 d = distanceatbestangle(points, self.templates[i], -AngleRange, AngleRange, AnglePrecision)
@@ -117,7 +123,7 @@ GestureRecognizer = function(oriented, uniform) -- constructor
             end
         end
         local name = self.templates[closestIndex] and self.templates[closestIndex].name or nil
-        local score = useProtractor and 1.0 / closestDistance or 1.0 - closestDistance / HalfDiagonal
+        local score = self.protractor and 1.0 / closestDistance or 1.0 - closestDistance / HalfDiagonal
         return name, score, closestIndex
     end
 
